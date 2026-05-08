@@ -94,12 +94,12 @@
         </div>
     </div>
 
-    <main id="app" class="hidden">
-        <header class="topbar">
-            <div>
+    <main id="app" class="app-shell hidden">
+        <header class="topbar topbar-card">
+            <div class="topbar-copy">
                 <div class="eyebrow">HEARTFARM</div>
                 <h1>Panel zarzadzania</h1>
-                <p class="muted">Dane i akcje sa pobierane z Supabase.</p>
+                <p class="muted">Centrum sterowania kolejkami ofiar, mordercami i komendami zapisywanymi w Supabase.</p>
             </div>
             <div class="topbar-actions">
                 <span id="session-user" class="session-user"></span>
@@ -110,6 +110,29 @@
 
         <div id="status-banner" class="status-banner hidden"></div>
 
+        <section class="overview-grid">
+            <article class="overview-card accent-blue">
+                <div class="eyebrow">Aktywne bazy</div>
+                <div id="overview-total-bases" class="overview-value">0</div>
+                <p class="overview-copy">Laczna liczba skonfigurowanych baz w panelu.</p>
+            </article>
+            <article class="overview-card accent-gold">
+                <div class="eyebrow">Kolejki ofiar</div>
+                <div id="overview-total-victims" class="overview-value">0</div>
+                <p class="overview-copy">Bazy typu victim gotowe pod rotacje i TPA.</p>
+            </article>
+            <article class="overview-card accent-red">
+                <div class="eyebrow">Bazy mordercow</div>
+                <div id="overview-total-killers" class="overview-value">0</div>
+                <p class="overview-copy">Sekcje killer z botami i recznymi komendami.</p>
+            </article>
+            <article class="overview-card overview-guide">
+                <div class="eyebrow">Szybki start</div>
+                <h2>Najpierw dodaj rekordy do <code>bases</code></h2>
+                <p class="overview-copy">Jak tylko wstawisz pierwsze rekordy w Supabase, dashboard zacznie je wyswietlac bez restartu strony.</p>
+            </article>
+        </section>
+
         <section id="dashboard-view">
             <div class="section-title">Ofiary (kolejki, tpa, smierc)</div>
             <div id="victims-container" class="grid grid-3"></div>
@@ -119,7 +142,30 @@
 
             <div id="empty-dashboard" class="empty-dashboard hidden">
                 <h2>Brak baz w bazie danych</h2>
-                <p>Dodaj rekordy do tabeli <code>bases</code>, a panel zacznie je od razu wyswietlac.</p>
+                <p>Dodaj pierwsze rekordy do tabeli <code>bases</code> i <code>victim_stats</code>, a panel od razu zacznie pokazywac kafelki.</p>
+                <div class="empty-grid">
+                    <div class="empty-help">
+                        <div class="eyebrow">Co zrobic teraz</div>
+                        <ol class="empty-steps">
+                            <li>Wejdz w Supabase do <code>SQL Editor</code>.</li>
+                            <li>Wklej ponizszy SQL i kliknij <code>Run</code>.</li>
+                            <li>Odswiez strone albo poczekaj chwile na realtime.</li>
+                        </ol>
+                    </div>
+                    <div class="empty-code">
+<pre><code>insert into public.bases (id, type, name, owner, rotation_enabled, tpa_delay)
+values
+  ('v1', 'victim', 'KOLEJKA OFIAR #1', 'janpawel212121-droid', true, 16),
+  ('v2', 'victim', 'KOLEJKA OFIAR #2', 'janpawel212121-droid', true, 16),
+  ('v3', 'victim', 'KOLEJKA OFIAR #3', 'janpawel212121-droid', true, 16),
+  ('k1', 'killer', 'MORDERCY #1', 'janpawel212121-droid', true, 16)
+on conflict (id) do nothing;
+
+insert into public.victim_stats (base_id)
+values ('v1'), ('v2'), ('v3')
+on conflict (base_id) do nothing;</code></pre>
+                    </div>
+                </div>
             </div>
         </section>
 

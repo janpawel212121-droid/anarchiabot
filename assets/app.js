@@ -24,6 +24,9 @@ const ui = {
     app: document.getElementById("app"),
     sessionUser: document.getElementById("session-user"),
     statusBanner: document.getElementById("status-banner"),
+    overviewTotalBases: document.getElementById("overview-total-bases"),
+    overviewTotalVictims: document.getElementById("overview-total-victims"),
+    overviewTotalKillers: document.getElementById("overview-total-killers"),
     dashboardView: document.getElementById("dashboard-view"),
     panelView: document.getElementById("panel-view"),
     victimsContainer: document.getElementById("victims-container"),
@@ -339,9 +342,16 @@ function renderDashboard() {
     const victims = entries.filter((base) => base.type === "victim");
     const killers = entries.filter((base) => base.type === "killer");
 
+    renderOverview(entries, victims, killers);
     ui.victimsContainer.innerHTML = victims.map(renderVictimCard).join("");
     ui.killersContainer.innerHTML = killers.map(renderKillerCard).join("");
     ui.emptyDashboard.classList.toggle("hidden", entries.length > 0);
+}
+
+function renderOverview(entries, victims, killers) {
+    ui.overviewTotalBases.textContent = String(entries.length);
+    ui.overviewTotalVictims.textContent = String(victims.length);
+    ui.overviewTotalKillers.textContent = String(killers.length);
 }
 
 function renderVictimCard(base) {
