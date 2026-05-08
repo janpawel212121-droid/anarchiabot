@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEARTFARM - Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-box">
+            <div class="eyebrow">HEARTFARM</div>
+            <h1>Panel logowania</h1>
+            <p id="auth-note" class="muted">
+                Zaloguj sie kontem Supabase Auth. Jesli widzisz ekran konfiguracji, uzupelnij plik <code>supabase-config.js</code>.
+            </p>
+            <form id="auth-form">
+                <label for="auth-email">Email</label>
+                <input type="email" id="auth-email" autocomplete="username" placeholder="admin@twojadomena.pl" required>
+                <label for="auth-pass">Haslo</label>
+                <input type="password" id="auth-pass" autocomplete="current-password" placeholder="Wpisz haslo" required>
+                <button class="btn-primary" type="submit">Zaloguj</button>
+            </form>
+            <div id="auth-error" class="error-text"></div>
+            <div id="setup-panel" class="setup-panel hidden">
+                <h2>Brak konfiguracji Supabase</h2>
+                <p>
+                    Skopiuj <code>supabase-config.example.js</code> do <code>supabase-config.js</code>, wpisz URL projektu i klucz anon,
+                    a potem odswiez strone.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Edytuj baze</h2>
+            <label for="edit-name">Nazwa kafelka</label>
+            <input type="text" id="edit-name">
+            <label for="edit-owner">Wlasciciel</label>
+            <input type="text" id="edit-owner">
+            <label for="edit-proxy">Proxy / klucz #1</label>
+            <input type="text" id="edit-proxy">
+            <div id="proxy2-container">
+                <label for="edit-proxy2">Proxy / klucz #2</label>
+                <input type="text" id="edit-proxy2">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" type="button" id="save-edit-btn">Zapisz</button>
+                <button class="btn-sec" type="button" id="cancel-edit-btn">Anuluj</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-killer-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>Dodaj morderce</h2>
+            <label for="new_bot">Nick</label>
+            <input type="text" id="new_bot" placeholder="Nick bota">
+            <label for="new_bot_owner">Wlasciciel</label>
+            <input type="text" id="new_bot_owner" placeholder="Wlasciciel">
+            <label for="new_bot_victim">Przypisana rotacja</label>
+            <select id="new_bot_victim">
+                <option value="">Brak rotacji</option>
+                <option value="v1">Kolejka ofiar #1</option>
+                <option value="v2">Kolejka ofiar #2</option>
+                <option value="v3">Kolejka ofiar #3</option>
+            </select>
+            <div class="modal-actions">
+                <button class="btn-primary" type="button" id="save-bot-btn">Dodaj</button>
+                <button class="btn-sec" type="button" id="cancel-bot-btn">Anuluj</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="console-modal" class="modal-overlay">
+        <div class="modal modal-wide">
+            <div class="console-head">
+                <h2>HEARTFARM - System</h2>
+                <div class="console-tabs">
+                    <button class="btn-sec btn-small" type="button" data-tab="sys-log-tab">Logi systemowe</button>
+                    <button class="btn-sec btn-small" type="button" data-tab="web-log-tab">Logi strony</button>
+                </div>
+            </div>
+            <div id="sys-log-tab" class="log-container"></div>
+            <div id="web-log-tab" class="log-container hidden"></div>
+            <div class="console-actions">
+                <button class="btn-sec btn-small" type="button" id="refresh-logs-btn">Odswiez</button>
+                <button class="btn-sec btn-small" type="button" id="close-console-btn">Zamknij</button>
+            </div>
+        </div>
+    </div>
+
+    <main id="app" class="hidden">
+        <header class="topbar">
+            <div>
+                <div class="eyebrow">HEARTFARM</div>
+                <h1>Panel zarzadzania</h1>
+                <p class="muted">Dane i akcje sa pobierane z Supabase.</p>
+            </div>
+            <div class="topbar-actions">
+                <span id="session-user" class="session-user"></span>
+                <button class="btn-sec btn-inline" type="button" id="open-console-btn">System</button>
+                <button class="btn-sec btn-inline" type="button" id="logout-btn">Wyloguj</button>
+            </div>
+        </header>
+
+        <div id="status-banner" class="status-banner hidden"></div>
+
+        <section id="dashboard-view">
+            <div class="section-title">Ofiary (kolejki, tpa, smierc)</div>
+            <div id="victims-container" class="grid grid-3"></div>
+
+            <div class="section-title">Mordercy (zbieracze, rotacja killi)</div>
+            <div id="killers-container" class="grid grid-3"></div>
+
+            <div id="empty-dashboard" class="empty-dashboard hidden">
+                <h2>Brak baz w bazie danych</h2>
+                <p>Dodaj rekordy do tabeli <code>bases</code>, a panel zacznie je od razu wyswietlac.</p>
+            </div>
+        </section>
+
+        <section id="panel-view" class="hidden">
+            <a href="#" id="close-base-link" class="back-link">Powrot do glownego panelu</a>
+            <h2 id="base-title" class="panel-title">Wczytywanie...</h2>
+            <div class="container">
+                <div id="controls-area" class="box"></div>
+                <div class="box">
+                    <h3 class="box-title">Konsola logow</h3>
+                    <div id="log-box" class="log-container tall"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../supabase-config.js"></script>
+    <script type="module" src="../assets/app.js"></script>
+</body>
+</html>
