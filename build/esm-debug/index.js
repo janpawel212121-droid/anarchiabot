@@ -39,12 +39,24 @@ function lookup(uri, opts) {
     }
     return io.socket(parsed.path, opts);
 }
+// so that "lookup" can be used both as a function (e.g. `io(...)`) and as a
+// namespace (e.g. `io.connect(...)`), for backward compatibility
 Object.assign(lookup, {
     Manager,
     Socket,
     io: lookup,
     connect: lookup,
 });
+/**
+ * Protocol version.
+ *
+ * @public
+ */
 export { protocol } from "socket.io-parser";
+/**
+ * Expose constructors for standalone build.
+ *
+ * @public
+ */
 export { Manager, Socket, lookup as io, lookup as connect, lookup as default, };
 export { Fetch, NodeXHR, XHR, NodeWebSocket, WebSocket, WebTransport, } from "engine.io-client";

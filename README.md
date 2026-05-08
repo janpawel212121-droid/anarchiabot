@@ -37,3 +37,22 @@ Najprostsza opcja: Vercel.
 - nie potrzebujesz Node backendu na produkcji, jesli uzywasz samego Supabase
 
 Mozesz tez wrzucic to na Cloudflare Pages albo Netlify, ale dla tego projektu Vercel jest najprostszy przez gotowy rewrite.
+
+## Zaleznosci Socket.IO / Engine.IO
+
+Jesli chcesz odtworzyc lokalnie zaleznosci i strukture folderow z poprzedniej wersji projektu, uruchom:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\sync-socket-deps.ps1
+```
+
+Skrypt:
+
+- pobiera zgodne wersje paczek z npm registry
+- odtwarza lokalne `node_modules`
+- synchronizuje foldery:
+  - `build/esm-debug`
+  - `engine.io-client/build/esm`
+  - `engine.io-parser/build/esm`
+  - `socket.io-component-emitter/lib/esm`
+  - `socket.io-parser/build/esm`

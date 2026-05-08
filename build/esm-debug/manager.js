@@ -85,13 +85,28 @@ export class Manager extends Emitter {
         this._timeout = v;
         return this;
     }
+    /**
+     * Starts trying to reconnect if reconnection is enabled and we have not
+     * started reconnecting yet
+     *
+     * @private
+     */
     maybeReconnectOnOpen() {
+        // Only try to reconnect if it's the first time we're connecting
         if (!this._reconnecting &&
             this._reconnection &&
             this.backoff.attempts === 0) {
+            // keeps reconnection from firing twice for the same reconnection loop
             this.reconnect();
         }
     }
+    /**
+     * Sets the current transport `socket`.
+     *
+     * @param {Function} fn - optional, callback
+     * @return self
+     * @public
+     */
     open(fn) {
         debug("readyState %s", this._readyState);
         if (~this._readyState.indexOf("open"))
@@ -102,6 +117,7 @@ export class Manager extends Emitter {
         const self = this;
         this._readyState = "opening";
         this.skipReconnect = false;
+        // emit `open`
         const openSubDestroy = on(socket, "open", function () {
             self.onopen();
             fn && fn();
@@ -115,13 +131,16 @@ export class Manager extends Emitter {
                 fn(err);
             }
             else {
+                // Only do this if there is no fn to handle the error
                 this.maybeReconnectOnOpen();
             }
         };
+        // emit `error`
         const errorSub = on(socket, "error", onError);
         if (false !== this._timeout) {
             const timeout = this._timeout;
             debug("connect attempt will timeout after %d", timeout);
+            // set timer
             const timer = this.setTimeoutFn(() => {
                 debug("connect attempt timed out after %d", timeout);
                 openSubDestroy();
@@ -139,20 +158,46 @@ export class Manager extends Emitter {
         this.subs.push(errorSub);
         return this;
     }
+    /**
+     * Alias for open()
+     *
+     * @return self
+     * @public
+     */
     connect(fn) {
         return this.open(fn);
     }
+    /**
+     * Called upon transport open.
+     *
+     * @private
+     */
     onopen() {
         debug("open");
+        // clear old subs
         this.cleanup();
+        // mark as open
         this._readyState = "open";
         this.emitReserved("open");
+        // add new subs
         const socket = this.engine;
-        this.subs.push(on(socket, "ping", this.onping.bind(this)), on(socket, "data", this.ondata.bind(this)), on(socket, "error", this.onerror.bind(this)), on(socket, "close", this.onclose.bind(this)), on(this.decoder, "decoded", this.ondecoded.bind(this)));
+        this.subs.push(on(socket, "ping", this.onping.bind(this)), on(socket, "data", this.ondata.bind(this)), on(socket, "error", this.onerror.bind(this)), on(socket, "close", this.onclose.bind(this)), 
+        // @ts-ignore
+        on(this.decoder, "decoded", this.ondecoded.bind(this)));
     }
+    /**
+     * Called upon a ping.
+     *
+     * @private
+     */
     onping() {
         this.emitReserved("ping");
     }
+    /**
+     * Called with data.
+     *
+     * @private
+     */
     ondata(data) {
         try {
             this.decoder.add(data);
@@ -161,15 +206,32 @@ export class Manager extends Emitter {
             this.onclose("parse error", e);
         }
     }
+    /**
+     * Called when parser fully decodes a packet.
+     *
+     * @private
+     */
     ondecoded(packet) {
+        // the nextTick call prevents an exception in a user-provided event listener from triggering a disconnection due to a "parse error"
         nextTick(() => {
             this.emitReserved("packet", packet);
         }, this.setTimeoutFn);
     }
+    /**
+     * Called upon socket error.
+     *
+     * @private
+     */
     onerror(err) {
         debug("error", err);
         this.emitReserved("error", err);
     }
+    /**
+     * Creates a new socket for the given `nsp`.
+     *
+     * @return {Socket}
+     * @public
+     */
     socket(nsp, opts) {
         let socket = this.nsps[nsp];
         if (!socket) {
@@ -181,6 +243,12 @@ export class Manager extends Emitter {
         }
         return socket;
     }
+    /**
+     * Called upon a socket close.
+     *
+     * @param socket
+     * @private
+     */
     _destroy(socket) {
         const nsps = Object.keys(this.nsps);
         for (const nsp of nsps) {
@@ -192,6 +260,12 @@ export class Manager extends Emitter {
         }
         this._close();
     }
+    /**
+     * Writes a packet.
+     *
+     * @param packet
+     * @private
+     */
     _packet(packet) {
         debug("writing packet %j", packet);
         const encodedPackets = this.encoder.encode(packet);
@@ -199,21 +273,45 @@ export class Manager extends Emitter {
             this.engine.write(encodedPackets[i], packet.options);
         }
     }
+    /**
+     * Clean up transport subscriptions and packet buffer.
+     *
+     * @private
+     */
     cleanup() {
         debug("cleanup");
         this.subs.forEach((subDestroy) => subDestroy());
         this.subs.length = 0;
         this.decoder.destroy();
     }
+    /**
+     * Close the current socket.
+     *
+     * @private
+     */
     _close() {
         debug("disconnect");
         this.skipReconnect = true;
         this._reconnecting = false;
         this.onclose("forced close");
     }
+    /**
+     * Alias for close()
+     *
+     * @private
+     */
     disconnect() {
         return this._close();
     }
+    /**
+     * Called when:
+     *
+     * - the low-level engine is closed
+     * - the parser encountered a badly formatted packet
+     * - all sockets are disconnected
+     *
+     * @private
+     */
     onclose(reason, description) {
         var _a;
         debug("closed due to %s", reason);
@@ -226,6 +324,11 @@ export class Manager extends Emitter {
             this.reconnect();
         }
     }
+    /**
+     * Attempt a reconnection.
+     *
+     * @private
+     */
     reconnect() {
         if (this._reconnecting || this.skipReconnect)
             return this;
@@ -245,6 +348,7 @@ export class Manager extends Emitter {
                     return;
                 debug("attempting reconnect");
                 this.emitReserved("reconnect_attempt", self.backoff.attempts);
+                // check again for the case socket closed in above events
                 if (self.skipReconnect)
                     return;
                 self.open((err) => {
@@ -268,6 +372,11 @@ export class Manager extends Emitter {
             });
         }
     }
+    /**
+     * Called upon successful reconnect.
+     *
+     * @private
+     */
     onreconnect() {
         const attempt = this.backoff.attempts;
         this._reconnecting = false;
